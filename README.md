@@ -9,8 +9,14 @@
 - **词法作用域与闭包**：正确实现了环境链与 Lambda 闭包
 - **47 个内置过程**：覆盖算术、比较、列表操作、类型检查等
 - **完整的特殊形式**：`define` `lambda` `if` `cond` `let` `begin` `and` `or` `quote` `quasiquote` 等
-- **REPL 模式**：交互式读取-求值-输出循环
+- **REPL 模式**：交互式读取-求值-输出循环，支持多行输入（括号自动匹配）
 - **文件模式**：从命令行读取 `.scm` 源文件并执行
+- **语法高亮**：基于 replxx 库的实时输入高亮和输出结果着色
+- **Tab 自动补全**：输入关键字前缀按 Tab 自动补全
+- **自动缩进**：多行输入时自动对齐到合适位置
+- **漂亮打印**：长列表自动换行缩进显示
+- **内置命令**：`help`、`clear`、`quit` 等便捷命令
+- **增强编辑体验**：方向键导航、历史记录保存、行编辑功能
 
 ---
 
@@ -33,7 +39,14 @@ mini-lisp/
 ├── builtins.cpp     # 内置过程实现
 ├── forms.h          # 特殊形式声明
 ├── forms.cpp        # 特殊形式实现
+├── highlight.h      # 语法高亮声明
+├── highlight.cpp    # 语法高亮实现
+├── commands.h       # 内置命令声明
+├── commands.cpp     # 内置命令实现（help, clear, pretty_print）
 ├── main.cpp         # 程序入口
+├── include/         # replxx 头文件
+│   └── replxx/
+├── replxx_src/      # replxx 源文件
 └── lv7-answer.scm   # 快速排序示例程序
 ```
 
@@ -46,23 +59,99 @@ mini-lisp/
 使用 Visual Studio 直接打开项目编译，或使用支持 C++20 的编译器：
 
 ```bash
-g++ -std=c++20 -o mini-lisp main.cpp token.cpp tokenizer.cpp value.cpp parser.cpp eval_env.cpp builtins.cpp forms.cpp
+g++ -std=c++20 -o mini-lisp main.cpp token.cpp tokenizer.cpp value.cpp parser.cpp eval_env.cpp builtins.cpp forms.cpp highlight.cpp commands.cpp replxx_src/*.cxx replxx_src/*.cpp -DREPLXX_STATIC -I include/replxx
 ```
+
+**编译依赖**：
+- C++20 标准支持
+- replxx 库（源码已集成在 `replxx_src/` 目录）
+- 需要定义 `REPLXX_STATIC` 宏（静态链接 replxx）
+- 需要定义 `_CRT_SECURE_NO_WARNINGS` 宏（禁用 MSVC 安全函数警告）
 
 ### REPL 模式
 
-直接运行可执行文件，进入交互式界面：
+直接运行可执行文件，进入交互式界面。支持语法高亮、历史记录和多行输入：
 
 ```
 $ ./mini-lisp
->>> (+ 1 2)
-3
+Mini-Lisp Interpreter v1.0
+Type (help) for help, (clear) to clear screen, (quit) to exit.
+
+>>> (+ 1 2)          ; 输入时实时高亮
+3                     ; 输出结果自动着色
 >>> (define (square x) (* x x))
 ()
 >>> (square 5)
 25
->>> (quit)
+>>> (displayln "Hello, World!")
+Hello, World!
+>>> ; 这是注释（灰色显示）
+>>> (if (< 1 2) "yes" "no")
+"yes"
 ```
+
+**Tab 自动补全**：输入关键字前缀按 Tab 自动补全：
+
+```
+>>> def<Tab>          ; 自动补全为 "define"
+>>> car<Tab>          ; 自动补全为 "car"
+>>> disp<Tab>         ; 自动补全为 "display"
+```
+
+**多行输入 + 自动缩进**：当括号未匹配时，解释器会自动等待续行并缩进到合适位置：
+
+```
+>>> (define (f x)      ; 此处换行，解释器继续等待输入
+...         (* x x))   ; 自动缩进对齐到 f 的位置
+()
+>>> (f 2)
+4
+```
+
+**内置命令**：
+
+| 命令 | 说明 |
+|------|------|
+| `(help)` | 显示所有可用函数和命令的帮助信息 |
+| `(clear)` | 清屏 |
+| `(quit)` 或 `(exit)` | 退出解释器 |
+
+**漂亮打印**：长列表自动换行缩进显示：
+
+```
+>>> (list (list 1 2) (list 3 4) (list 5 6)(list 7 8)(list 9 10)(list 11 12))
+(
+  (1 2)
+  (3 4)
+  (5 6)
+  (7 8)
+  (9 10)
+  (11 12)
+)
+```
+
+**语法高亮颜色方案**：
+
+| 元素 | 颜色 | 示例 |
+|------|------|------|
+| 括号 `()` | 亮蓝色 | `(` `)` |
+| 字符串 `"..."` | 亮绿色 | `"hello"` |
+| 数字 | 黄色 | `123` `3.14` |
+| 注释 `;` | 灰色 | `; 这是注释` |
+| 特殊形式 | 亮紫色 | `define` `if` `lambda` |
+| 内置函数 | 亮青色 | `car` `+` `display` |
+| 布尔值 `#t`/`#f` | 亮红色 | `#t` |
+| 普通标识符 | 默认色 | 用户变量名 |
+
+**输出高亮**：求值结果会根据类型自动着色：
+
+| 元素 | 颜色 |
+|------|------|
+| 空值 `()` | 灰色 |
+| 布尔值 | 亮红色 |
+| 字符串 | 亮绿色 |
+| 数字 | 黄色 |
+| 函数 `#<procedure>` | 亮青色 |
 
 ### 文件模式
 
@@ -270,13 +359,107 @@ std::shared_ptr<EvalEnv> closure;  // 定义时的环境（闭包）
 
 ---
 
-### 第八阶段：文件模式（`main.cpp`）
+### 第八阶段（Lv7+）：REPL 增强与用户体验
+
+基于 [replxx](https://github.com/AmokHuginnsson/replxx) 库实现完整的 REPL 增强功能，包括语法高亮、Tab 自动补全、自动缩进、漂亮打印和内置命令。
+
+#### 文件模式（`main.cpp`）
 
 `main()` 通过 `argc` 判断运行模式：
 - **无参数**：进入 REPL 循环，逐行读取、解析、求值、输出
 - **有文件路径参数**：读取整个文件内容，循环解析所有顶层表达式并求值，不输出求值结果（只有 `print`/`display` 等 IO 过程才产生输出）
 
 文件模式的多表达式解析通过 `Parser` 接受引用实现：每次 `parse()` 消费 deque 中已解析的 Token，循环直到 deque 为空。
+
+#### 语法高亮（`highlight.h` / `highlight.cpp`）
+
+**replxx 库**：一个轻量级的 GNU readline 替代品，支持 UTF-8、语法高亮、历史记录和跨平台（Windows/Linux/macOS）。使用 BSD 许可证。
+
+**输入高亮实现**：通过 replxx 的 `set_highlighter_callback` 注册高亮回调函数 `lisp_highlighter`，该函数在用户每次按键时被调用，为输入字符串的每个字符设置颜色。
+
+**高亮规则**：
+
+| 优先级 | 匹配规则 | 颜色 |
+|--------|----------|------|
+| 1 | `;` 开头 → 注释直到行尾 | 灰色 |
+| 2 | `"..."` → 字符串字面量 | 亮绿色 |
+| 3 | `#t` / `#f` → 布尔值 | 亮红色 |
+| 4 | 数字（可选符号前缀） | 黄色 |
+| 5 | `(` `)` `[` `]` `{` `}` → 括号 | 亮蓝色 |
+| 6 | `'` `` ` `` `,` → 特殊符号 | 亮紫色 |
+| 7 | 字母开头的标识符 → 查表确定颜色 | 紫色/青色/默认 |
+| 8 | `+` `-` `*` `/` `<` `>` `=` `!` → 运算符 | 青色/蓝色 |
+
+**标识符查表**：对于字母开头的标识符，查表确定颜色：
+- 在 `SPECIAL_FORMS` 集合中（11个特殊形式）→ 亮紫色
+- 在 `BUILTINS` 集合中（47个内置函数）→ 亮青色
+- 其他 → 默认色
+
+**输出高亮实现**：通过 `colorize_output` 函数为输出结果添加 ANSI 转义码着色。该函数在 `main.cpp` 的 REPL 循环和 `builtins.cpp` 的 `print`/`display`/`displayln` 函数中调用。
+
+**输出着色规则**：
+
+| 输出内容 | 颜色 |
+|----------|------|
+| `()` / `nil` | 灰色 |
+| `#t` / `#f` | 亮红色 |
+| `"..."` 字符串 | 亮绿色 |
+| `#<procedure>` | 亮青色 |
+| 数字 | 黄色 |
+| 错误信息 | 亮红色 |
+
+**多行输入支持**：replxx 原生支持多行编辑，配合括号匹配逻辑，在用户输入未闭合的括号时自动切换到续行模式（黄色 `...` 提示符）。
+
+**历史记录**：replxx 自动管理输入历史，支持方向键上下翻阅。历史记录保存在 `.mini-lisp_history` 文件中，退出时自动保存，下次启动时自动加载。
+
+**配置说明**：
+- 在 Visual Studio 项目属性中需要添加预处理器定义 `REPLXX_STATIC` 和 `_CRT_SECURE_NO_WARNINGS`
+- 需要将 replxx 的 `include` 目录添加到附加包含目录
+
+#### Tab 自动补全与自动缩进
+
+**Tab 自动补全**：基于 replxx 的 `set_completion_callback` 实现，支持所有特殊形式和内置函数的前缀匹配补全。
+
+- 输入关键字前缀后按 Tab 键触发补全
+- 支持括号、空格等分隔符后的补全
+- 多个匹配项时显示所有候选
+
+**自动缩进**：多行输入时，根据最后一个未匹配的 `(` 位置自动缩进：
+
+```scheme
+>>> (define (f x)      ; 光标在行尾
+...         (* x x))   ; 自动缩进到对齐 f 的位置
+```
+
+实现原理：找到最后一个未匹配的左括号，计算其后的列偏移，使用 `rx.set_preload_buffer()` 预加载缩进空格。
+
+#### 内置命令与输出格式化（`commands.h` / `commands.cpp`）
+
+**内置命令**：
+
+| 命令 | 说明 |
+|------|------|
+| `(help)` | 显示所有可用函数和命令的帮助信息 |
+| `(clear)` | 清屏 |
+| `(quit)` / `(exit)` | 退出解释器 |
+
+命令支持带括号和不带括号两种形式（`help` 和 `(help)` 均可）。
+
+**漂亮打印**：当列表输出超过 40 个字符且包含 3 个以上元素时，自动格式化为多行缩进显示：
+
+```scheme
+>>> (list (list 1 2) (list 3 4) (list 5 6)(list 7 8)(list 9 10)(list 11 12))
+(
+  (1 2)
+  (3 4)
+  (5 6)
+  (7 8)
+  (9 10)
+  (11 12)
+)
+```
+
+**实现原理**：解析顶层列表，将每个元素独立一行，嵌套列表保持单行显示。
 
 ---
 

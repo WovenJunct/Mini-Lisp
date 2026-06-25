@@ -6,6 +6,7 @@
 
 #include "./error.h"
 #include "./eval_env.h"
+#include "highlight.h"
 
 // 辅助函数：调用任意过程
 static ValuePtr callProc(ValuePtr proc, std::vector<ValuePtr> args,
@@ -20,7 +21,8 @@ static ValuePtr callProc(ValuePtr proc, std::vector<ValuePtr> args,
 // ============ 核心 IO 库 ============
 
 ValuePtr print(const std::vector<ValuePtr>& params, EvalEnv& env) {
-    for (auto& p : params) std::cout << p->toString() << std::endl;
+    for (auto& p : params)
+        std::cout << colorize_output(p->toString()) << std::endl;
     return std::make_shared<NilValue>();
 }
 
@@ -30,7 +32,7 @@ ValuePtr display(const std::vector<ValuePtr>& params, EvalEnv& env) {
         std::string s = params[0]->toString();
         std::cout << s.substr(1, s.size() - 2);
     } else {
-        std::cout << params[0]->toString();
+        std::cout << colorize_output(params[0]->toString());
     }
     return std::make_shared<NilValue>();
 }
@@ -41,7 +43,7 @@ ValuePtr displayln(const std::vector<ValuePtr>& params, EvalEnv& env) {
         std::string s = params[0]->toString();
         std::cout << s.substr(1, s.size() - 2) << std::endl;
     } else {
-        std::cout << params[0]->toString() << std::endl;
+        std::cout << colorize_output(params[0]->toString()) << std::endl;
     }
     return std::make_shared<NilValue>();
 }
