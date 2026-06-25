@@ -8,6 +8,9 @@
 #include "./eval_env.h"
 #include "highlight.h"
 
+// 全局标志：是否在 REPL 模式
+bool g_replMode = false;
+
 // 辅助函数：调用任意过程
 static ValuePtr callProc(ValuePtr proc, std::vector<ValuePtr> args,
                          EvalEnv& env) {
@@ -21,8 +24,14 @@ static ValuePtr callProc(ValuePtr proc, std::vector<ValuePtr> args,
 // ============ 核心 IO 库 ============
 
 ValuePtr print(const std::vector<ValuePtr>& params, EvalEnv& env) {
-    for (auto& p : params)
-        std::cout << colorize_output(p->toString()) << std::endl;
+    for (auto& p : params) {
+        std::string output = p->toString();
+        if (g_replMode) {
+            std::cout << colorize_output(output) << std::endl;
+        } else {
+            std::cout << output << std::endl;
+        }
+    }
     return std::make_shared<NilValue>();
 }
 
@@ -32,7 +41,12 @@ ValuePtr display(const std::vector<ValuePtr>& params, EvalEnv& env) {
         std::string s = params[0]->toString();
         std::cout << s.substr(1, s.size() - 2);
     } else {
-        std::cout << colorize_output(params[0]->toString());
+        std::string output = params[0]->toString();
+        if (g_replMode) {
+            std::cout << colorize_output(output);
+        } else {
+            std::cout << output;
+        }
     }
     return std::make_shared<NilValue>();
 }
@@ -43,7 +57,12 @@ ValuePtr displayln(const std::vector<ValuePtr>& params, EvalEnv& env) {
         std::string s = params[0]->toString();
         std::cout << s.substr(1, s.size() - 2) << std::endl;
     } else {
-        std::cout << colorize_output(params[0]->toString()) << std::endl;
+        std::string output = params[0]->toString();
+        if (g_replMode) {
+            std::cout << colorize_output(output) << std::endl;
+        } else {
+            std::cout << output << std::endl;
+        }
     }
     return std::make_shared<NilValue>();
 }

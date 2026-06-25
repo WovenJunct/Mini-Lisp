@@ -6,28 +6,28 @@
 
 // 显示启动信息
 void show_welcome() {
-    std::cout << "Mini-Lisp Interpreter v1.0" << std::endl;
-    std::cout << "Type (help) for help, (clear) to clear screen, (quit) to exit." << std::endl;
+    std::cout << "\033[1;36mMini-Lisp Interpreter v1.0\033[0m" << std::endl;
+    std::cout << "Type \033[1;33m(help)\033[0m for help, \033[1;33m(clear)\033[0m to clear screen, \033[1;33m(quit)\033[0m to exit." << std::endl;
     std::cout << std::endl;
 }
 
 // 显示帮助信息
 static void show_help() {
-    std::cout << "=== Help ===" << std::endl;
-    std::cout << "[Special Forms]" << std::endl;
+    std::cout << "\033[1;36m=== Help ===\033[0m" << std::endl;
+    std::cout << "\033[1;33m[Special Forms]\033[0m" << std::endl;
     std::cout << "  define, if, and, or, lambda, cond, begin, let" << std::endl;
     std::cout << "  quote, quasiquote, unquote" << std::endl;
-    std::cout << "[Built-in Functions]" << std::endl;
+    std::cout << "\033[1;33m[Built-in Functions]\033[0m" << std::endl;
     std::cout << "  car, cdr, cons, list, append, map, filter, reduce" << std::endl;
     std::cout << "  length, null?, pair?, list?, symbol?, number?" << std::endl;
     std::cout << "  boolean?, string?, integer?, procedure?, atom?" << std::endl;
     std::cout << "  print, display, displayln, newline, exit, error, eval, apply" << std::endl;
     std::cout << "  +, -, *, /, abs, expt, quotient, remainder, modulo" << std::endl;
     std::cout << "  =, <, >, <=, >=, even?, odd?, zero?, not, eq?, equal?" << std::endl;
-    std::cout << "[Commands]" << std::endl;
-    std::cout << "  (help)  - show this help" << std::endl;
-    std::cout << "  (clear) - clear screen" << std::endl;
-    std::cout << "  (quit)  - exit interpreter" << std::endl;
+    std::cout << "\033[1;33m[Commands]\033[0m" << std::endl;
+    std::cout << "  \033[1;32m(help)\033[0m  - show this help" << std::endl;
+    std::cout << "  \033[1;32m(clear)\033[0m - clear screen" << std::endl;
+    std::cout << "  \033[1;32m(quit)\033[0m  - exit interpreter" << std::endl;
 }
 
 // 清屏

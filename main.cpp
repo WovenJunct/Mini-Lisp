@@ -7,6 +7,7 @@
 #include"parser.h"
 #include"eval_env.h"
 #include "./error.h"
+#include "builtins.h"
 // 代码高亮相关
 #include "highlight.h"
 // 内置命令（help, clear, pretty_print）
@@ -29,6 +30,7 @@ int main(int argc, char* argv[]) {
 
     if (argc == 2) {
         // 文件模式
+        g_replMode = false;
         std::ifstream file(argv[1]);
         if (!file) {
             std::cerr << "Error: cannot open file " << argv[1] << std::endl;
@@ -54,6 +56,7 @@ int main(int argc, char* argv[]) {
 
     } else {
         // REPL 模式（使用 replxx）
+        g_replMode = true;
         replxx::Replxx rx;
         rx.install_window_change_handler();
 

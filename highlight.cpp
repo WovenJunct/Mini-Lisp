@@ -22,7 +22,8 @@ static const std::unordered_set<std::string> BUILTINS = {
     "abs",       "expt",       "quotient", "remainder", "modulo",
     "=",         "<",          ">",        "<=",        ">=",
     "even?",     "odd?",       "zero?",    "not",       "eq?",
-    "equal?"};
+    "equal?",
+    "help",      "clear",      "quit"};
 
 // 所有可补全的关键字
 static const std::vector<std::string> COMPLETIONS = {
@@ -35,7 +36,9 @@ static const std::vector<std::string> COMPLETIONS = {
     "string?", "integer?", "procedure?", "atom?",
     "print", "display", "displayln", "newline", "exit", "error", "eval", "apply",
     "+", "-", "*", "/", "abs", "expt", "quotient", "remainder", "modulo",
-    "=", "<", ">", "<=", ">=", "even?", "odd?", "zero?", "not", "eq?", "equal?"
+    "=", "<", ">", "<=", ">=", "even?", "odd?", "zero?", "not", "eq?", "equal?",
+    // 内置命令
+    "help", "clear", "quit"
 };
 
 // 判断字符是否是标识符的一部分
@@ -227,51 +230,73 @@ replxx::Replxx::completions_t lisp_completion(
     return completions;
 }
 
-// 为输出添加颜色
+// 为输出添加颜色（支持列表、数字、字符串、布尔等）
 std::string colorize_output(std::string const& text) {
-    // 空值
-    if (text == "()" || text == "nil") {
-        return "\033[90m" + text + "\033[0m";  // 灰色
-    }
-
-    // 布尔值
-    if (text == "#t" || text == "#f") {
-        return "\033[1;31m" + text + "\033[0m";  // 亮红色
-    }
-
-    // 字符串（带引号）
-    if (text.length() >= 2 && text.front() == '"' && text.back() == '"') {
-        return "\033[1;32m" + text + "\033[0m";  // 亮绿色
-    }
-
-    // 函数
-    if (text == "#<procedure>") {
-        return "\033[1;36m" + text + "\033[0m";  // 亮青色
-    }
-
-    // 数字
-    bool isNum = true;
-    size_t start = 0;
-    if (text[0] == '-' || text[0] == '+') start = 1;
-    if (start < text.length()) {
-        for (size_t i = start; i < text.length(); i++) {
-            if (!isdigit(text[i]) && text[i] != '.') {
-                isNum = false;
-                break;
+    if (text.empty()) return text;
+    
+    std::string result = "";
+    bool in_string = false;
+    
+    for (size_t i = 0; i < text.length(); i++) {
+        char c = text[i];
+        
+        // 处理字符串（带引号的）
+        if (c == '"' && (i == 0 || text[i - 1] != '\\')) {
+            in_string = !in_string;
+            if (in_string) {
+                result += "\033[1;32m\"";  // 亮绿色开始
+            } else {
+                result += "\"\033[0m";  // 结束，重置颜色
             }
+            continue;
         }
-    } else {
-        isNum = false;
+        
+        if (in_string) {
+            result += c;
+            continue;
+        }
+        
+        // 括号：亮蓝色
+        if (c == '(' || c == ')' || c == '[' || c == ']' || c == '{' || c == '}') {
+            result += "\033[1;34m" + std::string(1, c) + "\033[0m";
+            continue;
+        }
+        
+        // 布尔值
+        if (c == '#' && i + 1 < text.length() && (text[i + 1] == 't' || text[i + 1] == 'f')) {
+            result += "\033[1;31m" + text.substr(i, 2) + "\033[0m";
+            i++;
+            continue;
+        }
+        
+        // 函数 #<procedure>
+        if (c == '#' && i + 12 <= text.length() && text.substr(i, 12) == "#<procedure>") {
+            result += "\033[1;36m#<procedure>\033[0m";
+            i += 11;
+            continue;
+        }
+        
+        // 数字
+        if (isdigit(c) || (c == '.' && i + 1 < text.length() && isdigit(text[i + 1]))) {
+            size_t numStart = i;
+            if (c == '-' || c == '+') i++;
+            while (i < text.length() && (isdigit(text[i]) || text[i] == '.')) {
+                i++;
+            }
+            result += "\033[33m" + text.substr(numStart, i - numStart) + "\033[0m";
+            i--;
+            continue;
+        }
+        
+        // 空格：保持原样
+        if (c == ' ') {
+            result += c;
+            continue;
+        }
+        
+        // 其他字符（标识符等）：保持原样
+        result += c;
     }
-
-    if (isNum && text.length() > start) {
-        return "\033[33m" + text + "\033[0m";  // 黄色
-    }
-
-    // 错误信息
-    if (text.find("Error") != std::string::npos) {
-        return "\033[1;31m" + text + "\033[0m";  // 亮红色
-    }
-
-    return text;
+    
+    return result;
 }
