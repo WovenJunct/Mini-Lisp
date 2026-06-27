@@ -122,48 +122,8 @@ int main(int argc, char* argv[]) {
 
             // 继续输入直到括号匹配
             while (depth > 0) {
-                // 计算自动缩进：找到最后一个未匹配的 '('，缩进到其后的位置
-                std::string indent = "";
-                {
-                    // 找到 fullInput 中最后一个未匹配的 '('
-                    int tempDepth = 0;
-                    int lastOpenPos = -1;
-                    for (int i = static_cast<int>(fullInput.length()) - 1; i >= 0; i--) {
-                        char ch = fullInput[i];
-                        if (ch == ')') tempDepth++;
-                        else if (ch == '(') {
-                            if (tempDepth == 0) {
-                                lastOpenPos = i;
-                                break;
-                            }
-                            tempDepth--;
-                        }
-                    }
-                    
-                    if (lastOpenPos >= 0) {
-                        // 计算缩进： '(' 后面的内容作为缩进基础
-                        int spaces = lastOpenPos + 1;
-                        // 如果 '(' 后面有内容，用那个位置的偏移
-                        if (lastOpenPos + 1 < static_cast<int>(fullInput.length())) {
-                            // 从 '(' 后面到行尾计算列偏移
-                            int col = 0;
-                            for (int i = lastOpenPos + 1; i < static_cast<int>(fullInput.length()); i++) {
-                                if (fullInput[i] == '\n') {
-                                    col = 0;
-                                } else {
-                                    col++;
-                                }
-                            }
-                            indent = std::string(col, ' ');
-                        } else {
-                            // '(' 后面没有内容，缩进 2 个空格
-                            indent = "  ";
-                        }
-                    } else {
-                        // 没有找到未匹配的 '('，缩进 2 个空格
-                        indent = "  ";
-                    }
-                }
+                // 计算自动缩进：根据嵌套深度，每层缩进 2 个空格
+                std::string indent(depth * 2, ' ');
                 
                 // 预加载缩进空格
                 rx.set_preload_buffer(indent);
